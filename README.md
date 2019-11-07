@@ -1,0 +1,31 @@
+# File based driver for Laravel Queue
+
+## Installing
+
+```sh
+$ composer require "al-one/laravel-queue-file" -vvv
+```
+
+
+## Usage
+
+```php
+# config/queue.php
+<?php
+
+return [
+    'default' => env('QUEUE_DRIVER','file'),
+    'connections' => [
+        'file' => [
+            'driver' => 'file',
+            //'path'   => 'app/queue', // use storage_path() if not start with "/"
+            //'queue'  => 'default',
+        ],
+    ],
+];
+```
+
+
+## License
+
+MIT

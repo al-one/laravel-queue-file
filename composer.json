@@ -1,0 +1,30 @@
+{
+    "name": "al-one/laravel-queue-file",
+    "description": "File based driver for Laravel Queue",
+    "keywords": ["laravel", "illuminate", "queue", "file-based", "laravel-queues"],
+    "authors": [
+        {
+            "name": "Alone",
+            "email": "hi@anlo.ng"
+        }
+    ],
+    "require": {
+        "php": ">=5.6.4",
+        "illuminate/contracts": "^5.4",
+        "illuminate/queue": "^5.4",
+        "illuminate/support": "^5.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Alone\\LaravelQueueFile\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Alone\\LaravelQueueFile\\ServiceProvider"
+            ]
+        }
+    },
+    "license": "MIT"
+}
