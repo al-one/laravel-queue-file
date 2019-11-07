@@ -89,7 +89,7 @@ class FileQueue extends Queue implements QueueContract
      */
     public function later($delay,$job,$data = '',$queue = null)
     {
-        $payload = $this->createPayload($job,$data);
+        $payload = $this->createPayload($job,$this->getQueue($queue),$data);
         return $this->laterRaw($delay,$payload,$queue);
     }
 
@@ -121,9 +121,9 @@ class FileQueue extends Queue implements QueueContract
      *
      * @version 5.7
      */
-    protected function createPayloadArray($job,$data = '',$queue = null)
+    protected function createPayloadArray($job,$queue,$data = '')
     {
-        return array_merge(parent::createPayloadArray($job,$data,$queue),[
+        return array_merge(parent::createPayloadArray($job,$queue,$data),[
             'id' => Str::random(16),
             'attempts' => 0,
         ]);
@@ -273,7 +273,7 @@ class FileQueue extends Queue implements QueueContract
      */
     public function getPath($file = '')
     {
-        $path = isset($this->path) ? $this->path : 'app/queue';
+        $path = $this->path ?? 'app/queue';
         if(!Str::startsWith($path,['/','\\']))
         {
             $path = storage_path($path);

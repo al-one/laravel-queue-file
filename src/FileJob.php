@@ -79,7 +79,7 @@ class FileJob extends Job implements JobContract
     {
         parent::release($delay);
         $this->fileQueue->popOrRelease($this->queue,$this->job,false);
-        $this->fileQueue->later($delay,$this,isset($this->decoded['data']) ? $this->decoded['data'] : '',$this->queue);
+        $this->fileQueue->later($delay,$this,$this->decoded['data'] ?? '',$this->queue);
     }
 
     /**
@@ -89,7 +89,7 @@ class FileJob extends Job implements JobContract
      */
     public function attempts()
     {
-        return (isset($this->decoded['attempts']) ? $this->decoded['attempts'] : 0) + 1;
+        return ($this->decoded['attempts'] ?? 0) + 1;
     }
 
     /**
@@ -99,7 +99,7 @@ class FileJob extends Job implements JobContract
      */
     public function getJobId()
     {
-        return isset($this->decoded['id']) ? $this->decoded['id'] : null;
+        return $this->decoded['id'] ?? null;
     }
 
 }

@@ -15,8 +15,8 @@ class FileConnector implements ConnectorInterface
     public function connect(array $config)
     {
         return new FileQueue(
-            data_get($config,'path'),
-            data_get($config,'queue','default')
+            $config['path'] ?? null,
+            $config['queue'] ?? 'default'
         );
     }
 }
