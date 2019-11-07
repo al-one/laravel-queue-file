@@ -241,6 +241,10 @@ class FileQueue extends Queue implements QueueContract
             mkdir($dir,0777,true);
         }
         $path = $dir.$this->getQueue($queue);
+        if(!file_exists($path))
+        {
+            file_put_contents($path,'',FILE_APPEND | LOCK_EX);
+        }
         if(isset($mode))
         {
             $file = fopen($path,$mode);
