@@ -148,6 +148,10 @@ class FileQueue extends Queue implements QueueContract
     public function popOrRelease($queue = null,$payload = null,$delay = null)
     {
         $path = $this->getQueueFilePath($queue);
+        if(!file_exists($path))
+        {
+            return null;
+        }
         $ptmp = $this->getQueueFilePath("$queue.tmp");
         $file = $this->getFile($queue,'r+');
         $ftmp = $this->getFile("$queue.tmp",'w');
@@ -210,8 +214,8 @@ class FileQueue extends Queue implements QueueContract
         flock($ftmp,LOCK_UN);
         fclose($file);
         fclose($ftmp);
-        unlink($path);
-        rename($ptmp,$path);
+        @unlink($path);
+        @rename($ptmp,$path);
         return $data;
     }
 
