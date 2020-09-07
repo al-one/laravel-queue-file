@@ -152,66 +152,70 @@ class FileQueue extends Queue implements QueueContract
         {
             return null;
         }
-        $ptmp = $this->getQueueFilePath("$queue.tmp");
-        $file = $this->getFile($queue,'r+');
-        $ftmp = $this->getFile("$queue.tmp",'w');
-        flock($file,LOCK_EX);
-        flock($ftmp,LOCK_EX);
         $data = null;
         $line = '';
         $now = time();
-        while(1)
+        $ptmp = $this->getQueueFilePath("$queue.tmp");
+        $file = $this->getFile($queue,'r+');
+        $ftmp = $this->getFile("$queue.tmp",'w');
+        if(flock($file,LOCK_EX))
         {
-            $chr = fgetc($file);
-            if($chr === false)
+            if(flock($ftmp,LOCK_EX))
             {
-                break;
-            }
-            if($chr === PHP_EOL)
-            {
-                $tim = substr($line,0,10);
-                if(is_numeric($tim))
+                while(1)
                 {
-                    $tim = (int)$tim;
-                    $line = substr($line,11);
-                }
-                else
-                {
-                    $tim = 0;
-                }
-                $yes = $tim <= $now;
-                if($yes && is_null($data) && is_null($payload)) // pop
-                {
-                    $data = trim($line);
-                    $line = '';
-                }
-                elseif($line === $payload)
-                {
-                    if($delay === false) // del
+                    $chr = fgetc($file);
+                    if($chr === false)
                     {
-                        $data = true;
-                        $line = '';
+                        break;
                     }
-                    else // set
+                    if($chr === PHP_EOL)
                     {
-                        $data = true;
-                        $tim = $now + (int)$delay;
+                        $tim = substr($line,0,10);
+                        if(is_numeric($tim))
+                        {
+                            $tim = (int)$tim;
+                            $line = substr($line,11);
+                        }
+                        else
+                        {
+                            $tim = 0;
+                        }
+                        $yes = $tim <= $now;
+                        if($yes && is_null($data) && is_null($payload)) // pop
+                        {
+                            $data = trim($line);
+                            $line = '';
+                        }
+                        elseif($line === $payload)
+                        {
+                            if($delay === false) // del
+                            {
+                                $data = true;
+                                $line = '';
+                            }
+                            else // set
+                            {
+                                $data = true;
+                                $tim = $now + (int)$delay;
+                            }
+                        }
+                        if($line)
+                        {
+                            fwrite($ftmp,"$tim $line".PHP_EOL);
+                            $line = '';
+                        }
+                    }
+                    else
+                    {
+                        $line .= $chr;
                     }
                 }
-                if($line)
-                {
-                    fwrite($ftmp,"$tim $line".PHP_EOL);
-                    $line = '';
-                }
+                ftruncate($file,0);
+                flock($ftmp,LOCK_UN);
             }
-            else
-            {
-                $line .= $chr;
-            }
+            flock($file,LOCK_UN);
         }
-        ftruncate($file,0);
-        flock($file,LOCK_UN);
-        flock($ftmp,LOCK_UN);
         fclose($file);
         fclose($ftmp);
         @unlink($path);
@@ -247,7 +251,13 @@ class FileQueue extends Queue implements QueueContract
         $path = $dir.$this->getQueue($queue);
         if(!file_exists($path))
         {
-            file_put_contents($path,'',FILE_APPEND | LOCK_EX);
+            $file = fopen($path,'a');
+            if(flock($file,LOCK_EX))
+            {
+                fwrite($file,'');
+                flock($file,LOCK_UN);
+            }
+            fclose($file);
         }
         if(isset($mode))
         {
