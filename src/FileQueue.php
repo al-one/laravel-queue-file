@@ -158,68 +158,67 @@ class FileQueue extends Queue implements QueueContract
         $ptmp = $this->getQueueFilePath("$queue.tmp");
         $file = $this->getFile($queue,'r+');
         $ftmp = $this->getFile("$queue.tmp",'w');
-        if(flock($file,LOCK_EX))
+        flock($file,LOCK_EX);
+        flock($ftmp,LOCK_EX);
+        while(1)
         {
-            if(flock($ftmp,LOCK_EX))
+            $chr = fgetc($file);
+            if($chr === false)
             {
-                while(1)
+                break;
+            }
+            if($chr === PHP_EOL)
+            {
+                $tim = substr($line,0,10);
+                if(is_numeric($tim))
                 {
-                    $chr = fgetc($file);
-                    if($chr === false)
+                    $tim = (int)$tim;
+                    $line = substr($line,11);
+                }
+                else
+                {
+                    $tim = 0;
+                }
+                $yes = $tim <= $now;
+                if($yes && is_null($data) && is_null($payload)) // pop
+                {
+                    $data = trim($line);
+                    $line = '';
+                }
+                elseif($line === $payload)
+                {
+                    if($delay === false) // del
                     {
-                        break;
+                        $data = true;
+                        $line = '';
                     }
-                    if($chr === PHP_EOL)
+                    else // set
                     {
-                        $tim = substr($line,0,10);
-                        if(is_numeric($tim))
-                        {
-                            $tim = (int)$tim;
-                            $line = substr($line,11);
-                        }
-                        else
-                        {
-                            $tim = 0;
-                        }
-                        $yes = $tim <= $now;
-                        if($yes && is_null($data) && is_null($payload)) // pop
-                        {
-                            $data = trim($line);
-                            $line = '';
-                        }
-                        elseif($line === $payload)
-                        {
-                            if($delay === false) // del
-                            {
-                                $data = true;
-                                $line = '';
-                            }
-                            else // set
-                            {
-                                $data = true;
-                                $tim = $now + (int)$delay;
-                            }
-                        }
-                        if($line)
-                        {
-                            fwrite($ftmp,"$tim $line".PHP_EOL);
-                            $line = '';
-                        }
-                    }
-                    else
-                    {
-                        $line .= $chr;
+                        $data = true;
+                        $tim = $now + (int)$delay;
                     }
                 }
-                ftruncate($file,0);
-                flock($ftmp,LOCK_UN);
+                if($line)
+                {
+                    fwrite($ftmp,"$tim $line".PHP_EOL);
+                    $line = '';
+                }
             }
-            flock($file,LOCK_UN);
+            else
+            {
+                $line .= $chr;
+            }
         }
+        ftruncate($file,0);
+        flock($file,LOCK_UN);
+        flock($ftmp,LOCK_UN);
         fclose($file);
         fclose($ftmp);
-        @unlink($path);
-        @rename($ptmp,$path);
+        if(isset($data))
+        {
+            @unlink($path);
+            @rename($ptmp,$path);
+        }
         return $data;
     }
 
