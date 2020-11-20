@@ -108,7 +108,7 @@ class FileQueue extends Queue implements QueueContract
         fwrite($file,$this->availableAt($delay).' '.$payload.PHP_EOL);
         flock($file,LOCK_UN);
         fclose($file);
-        return Arr::get(json_decode($payload,true),'id');
+        return Arr::get(json_decode($payload,true),'uuid');
     }
 
     /**
@@ -118,13 +118,11 @@ class FileQueue extends Queue implements QueueContract
      * @param  mixed   $data
      * @param  string  $queue
      * @return string
-     *
-     * @version 5.7
      */
     protected function createPayloadArray($job,$queue,$data = '')
     {
         return array_merge(parent::createPayloadArray($job,$queue,$data),[
-            'id' => Str::random(16),
+            'uuid' => Str::uuid(),
             'attempts' => 0,
         ]);
     }
